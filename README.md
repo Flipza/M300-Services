@@ -8,4 +8,4 @@ Um mit dem Arbeiten überhaupt beginnen zu können, müsssen zuerst einige Tools
 - Git Client / Git Account
 - Visual Studio Code
 - VirtualBox
-- 
+- Vagrant
