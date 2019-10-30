@@ -46,6 +46,29 @@ Git Befehl | Erklärung
 
 ### 2.2 Visual Studio Code installieren
 
+1. Unter https://code.visualstudio.com/ lässt sich der Installer (Version 1.26.1) herunterladen.
+2. Auf "Download for Mac" klicken und warten, bis das Fenster zum Herunterladen erscheint. Anschliessend den Download des Installers starten
+3. Die Installation erfolgt auch hier GUI-basiert. Wiederum aber Standard (ohne spezielle Anpassungen), sodass an dieser Stelle auf eine Erklärung ebenfalls verzichtet wird.
+4. Sobald der Vorgang abgeschlossen wurde, kann mit dem Herunterladen der ISO-Datei und der VM-Erstellung fortgefahren werden.
+
+
+### Extensions installieren
+***
+
+Wir fügen dem Editor drei wichtige Extensions hinzu:
+
+* Markdown All in One (von Yu Zhang)
+* Vagrant Extension (von Marco Stanzi)
+* vscode-pdf Extension (von tomiko1207)
+
+Dazu müssen folgende Anweisungen befolgt werden: 
+
+1. Visual Studio Code öffnen
+2. Die Tastenkombination `CTRL` + `SHIFT` + `X` drücken und in der Suchleiste die erwähnten Extensions suchen
+3. Auf `Install` klicken und anschliessend auf `Reload`, um die Extension in den Arbeitsbereich zu laden.
+4. Nun können die Extensions angewendet werden. Für Markdown ist [diese Liste](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet/"github.com") sehr hilfreich.
+
+
 ### 2.3 Vagrant installieren
 
 Vagrant ist ein Programm zur Erstellung und Verwaltung virtueller Maschinen und ermöglicht einfache Softwareverteilung.
