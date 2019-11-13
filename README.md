@@ -132,11 +132,11 @@ Nachfolgend wird die VM mit einem bereits abgeänderten File bzw. VM aus dem M30
     ```
 7. Vagrant ist nun komplett einsatzfähig!
 
-### 2.4 Sicherheit in virtuellen Maschinen implementieren
-***
-
-## UFW Firewall
+## 2.4 Sicherheit in virtuellen Maschinen implementieren
 **
+
+### UFW Firewall
+***
 UFW steht für `Uncomplicated Firewall`. Ziel von UFW ist es, ein unkompliziertes Kommandozeilen-basiertes Frontend für das sehr leistungsfähige, aber nicht gerade einfach zu konfigurierende iptables zu bieten. UFW unterstützt sowohl IPv4 als auch IPv6.
 
 **Ausgabe der offenen Ports**
@@ -198,8 +198,8 @@ Werden keine Ausgehenden Verbindungen benötigt oder nur bestimmte (z.B. ssh) k�
 ```
 
 
-## Reverse Proxy
-**
+### Reverse Proxy
+***
 Der Apache-Webserver kann auch als Reverse Proxy eingerichtet werden. 
 
 **Installation**
