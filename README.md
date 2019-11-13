@@ -131,3 +131,113 @@ Nachfolgend wird die VM mit einem bereits abgeänderten File bzw. VM aus dem M30
       $ vagrant destroy -f
     ```
 7. Vagrant ist nun komplett einsatzfähig!
+
+### 2.4 Sicherheit in virtuellen Maschinen implementieren
+***
+
+## UFW Firewall
+**
+UFW steht für `Uncomplicated Firewall`. Ziel von UFW ist es, ein unkompliziertes Kommandozeilen-basiertes Frontend für das sehr leistungsfähige, aber nicht gerade einfach zu konfigurierende iptables zu bieten. UFW unterstützt sowohl IPv4 als auch IPv6.
+
+**Ausgabe der offenen Ports**
+```Shell
+    $ netstat -tulpen
+```
+
+**Installation**
+```Shell
+    $ sudo apt-get install ufw
+```
+
+**Start / Stop**
+```Shell
+    $ sudo ufw status
+    $ sudo ufw enable
+    $ sudo ufw disable
+```
+
+**Firewall-Regeln**
+```Shell
+    # Port 80 (HTTP) öffnen für alle
+    vagrant ssh web
+    sudo ufw allow 80/tcp
+    exit
+
+    # Port 22 (SSH) nur für den Host (wo die VM laufen) öffnen
+    vagrant ssh web
+    w
+    sudo ufw allow from [Meine-IP] to any port 22
+    exit
+
+    # Port 3306 (MySQL) nur für den web Server öffnen
+    vagrant ssh database
+    sudo ufw allow from [IP der Web-VM] to any port 3306
+    exit
+```
+
+**Zugriff testen**
+```Shell
+    $ curl -f 192.168.55.101
+    $ curl -f 192.168.55.100:3306
+```
+
+**Löschen von Regeln**
+```Shell
+    $ sudo ufw status numbered
+    $ sudo ufw delete 1
+```
+
+**Ausgehende Verbindungen** <br>
+Ausgehende Verbindungen werden standardmässig erlaubt.
+
+Werden keine Ausgehenden Verbindungen benötigt oder nur bestimmte (z.B. ssh) können zuerst alle geschlossen und dann einzelne Freigeschaltet werden.
+
+```Shell
+    $ sudo ufw deny out to any
+    $ sudo ufw allow out 22/tcp 
+```
+
+
+## Reverse Proxy
+**
+Der Apache-Webserver kann auch als Reverse Proxy eingerichtet werden. 
+
+**Installation**
+Dazu müssen folgende Module installiert werden:
+```Shell
+    $ sudo apt-get install libapache2-mod-proxy-html
+    $ sudo apt-get install libxml2-dev
+```
+
+Anschliessend die Module in Apache aktivieren:
+```Shell
+    $ sudo a2enmod proxy
+    $ sudo a2enmod proxy_html
+    $ sudo a2enmod proxy_http 
+```
+
+Die Datei /etc/apache2/apache2.conf wie folgt ergänzen:
+```Shell
+    ServerName localhost 
+```
+
+Apache-Webserver neu starten:
+```Shell
+    $ sudo service apache2 restart
+```
+
+**Konfiguration** <br>
+Die Weiterleitungen sind z.B. in `sites-enabled/001-reverseproxy.conf` eingetragen:
+```Shell
+    # Allgemeine Proxy Einstellungen
+    ProxyRequests Off
+    <Proxy *>
+        Order deny,allow
+        Allow from all
+    </Proxy>
+
+    # Weiterleitungen master
+    ProxyPass /master http://master
+    ProxyPassReverse /master http://master
+```
+
