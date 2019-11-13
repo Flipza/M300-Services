@@ -30,7 +30,7 @@ Um das lokale Repository hochzuladen führen wir folgende Schritte, bei jedem Up
 Git Befehl | Erklärung
 -----------|----------
  $  cd Pfad/zu/meinem/Repository   | # Zum lokalen GitHub-Repository wechseln
-----------|----------
+
  $  git status                     | # Geänderte Datei(en) werden rot aufgelistet
 
  $  git add -A                     | # Fügt alle Dateien zum "Upload" hinzu
