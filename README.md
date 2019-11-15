@@ -241,3 +241,16 @@ Die Weiterleitungen sind z.B. in `sites-enabled/001-reverseproxy.conf` eingetrag
     ProxyPassReverse /master http://master
 ```
 
+## 3. LB2; Ansible AWX with Nginx Reverse Proxy on Ubuntu 18.04 via Vagrantfile
+**
+
+### Vorgabe
+
+Das Ziel ist die Erstellung eines Vagrantfiles, welches automatisiert die Ansible AWX Umgebung via Nginx reverse proxy auf Ubuntu 18.04 installiert. Dafür wird folgendes benötigt:
+
+* Vagrant auf Hostsystem installiert.
+* Konfiguriertes Vagrantfile mit allen Angaben für die Installation.
+* Shared Folder für die Berteitstellung der im Vagrantfile für die Installation der AWX Umgebung benötigten Dateien.
+* Portweiterleitung.
+
+
