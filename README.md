@@ -3,7 +3,7 @@ Modul 300 Dokumentation von Philipp Zahner
 
 ### Inhaltsverzeichnis
 
-* 3 - [LB2: Ansible AWX mit Vagrant aufsetzen](#-3---LB2: Ansible AWX mit Vagrant aufsetzen)
+* 3 - [LB2: Ansible AWX mit Vagrant aufsetzen](#-3---LB2:-Ansible-AWX-mit-Vagrant-aufsetzen)
 
 ## 1. Vorbereitungen
 
@@ -245,7 +245,7 @@ Die Weiterleitungen sind z.B. in `sites-enabled/001-reverseproxy.conf` eingetrag
     ProxyPassReverse /master http://master
 ```
 
-! LB2: Ansible AWX mit Vagrant aufsetzen
+! 3 LB2: Ansible AWX mit Vagrant aufsetzen
 ===
 
 ### Vorgabe
