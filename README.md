@@ -3,7 +3,7 @@ Modul 300 Dokumentation von Philipp Zahner
 
 ### Inhaltsverzeichnis
 
-* 01 - [LB2: Ansible AWX mithilfe von Vagrant aufsetzen](## 3. LB2; Ansible AWX with Nginx Reverse Proxy on Ubuntu 18.04 via Vagrantfile)
+* 01 - [GitHub Account](#-01---github-account)
 
 ## 1. Vorbereitungen
 
@@ -245,7 +245,7 @@ Die Weiterleitungen sind z.B. in `sites-enabled/001-reverseproxy.conf` eingetrag
     ProxyPassReverse /master http://master
 ```
 
-## 3. LB2; Ansible AWX with Nginx Reverse Proxy on Ubuntu 18.04 via Vagrantfile
+![] 01 - GitHub Account 
 **
 
 ### Vorgabe
