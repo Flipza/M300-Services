@@ -245,7 +245,7 @@ Die Weiterleitungen sind z.B. in `sites-enabled/001-reverseproxy.conf` eingetrag
     ProxyPassReverse /master http://master
 ```
 
-01 - GitHub Account 
+![] 01 - GitHub Account 
 ===
 
 ### Vorgabe
