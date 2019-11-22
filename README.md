@@ -261,13 +261,13 @@ Das Ziel ist die Erstellung eines Vagrantfiles, welches automatisiert die Ansibl
 ! 02 - LB3
 ===
 
-In dieser Arbeit geht es darum, mithilfe von Vagrant 4 Virtuelle Maschinen aufzusetzen und anschliessend mit Ansible die Softwareverteilung zu steuern.
+In dieser Arbeit geht es darum, mithilfe von Vagrant 4 Virtuelle Maschinen aufzusetzen und anschliessend mit Ansible die Softwareverteilung zu steuern. Im wesentlichen setzen wir zwei Webserver auf, welche mit einem Loadbalancer ausgestattet werden.
 
 Wir benötigen für diese Aufgabe folgende VM's:
-* Controller Node
-* Loadbalancer Node
-* Webserver 1
-* Webserver 2
+* Controller Node (Ansible)
+* Loadbalancer Node (Nginx Round-Robin Loadbalancer)
+* Webserver 1 (Apache Webserver 1)
+* Webserver 2 (Apache Webserver 2)
 
 Alle VM's basieren auf Ubuntu 18.04 Server und werden mit Vagrant aufgesetzt. 
 Das Vagrantfile sieht folgendermassen aus:
