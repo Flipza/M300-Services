@@ -261,4 +261,25 @@ Das Ziel ist die Erstellung eines Vagrantfiles, welches automatisiert die Ansibl
 ! 02 - LB3
 ===
 
+In dieser Arbeit geht es darum, mithilfe von Vagrant 4 Virtuelle Maschinen aufzusetzen und anschliessend mit Ansible die Softwareverteilung zu steuern.
 
+Wir benötigen für diese Aufgabe folgende VM's:
+* Controller Node
+* Loadbalancer Node
+* Webserver 1
+* Webserver 2
+
+Alle VM's basieren auf Ubuntu 18.04 Server und werden mit Vagrant aufgesetzt. 
+Das Vagrantfile sieht folgendermassen aus:
+```Shell
+    $ docker run --name logtest ubuntu bash -c 'echo "stdout"; echo "stderr" >>2'
+    $ docker logs logtest
+    $ docker rm logtest
+```
+
+Damit sich Ansible auf alle VM's einloggen kann, müssen wir auf der Acontrol-Node einen public-Key generieren, welchen wir auf alle anderen VM's kopieren:
+```Shell
+    $ docker run --name logtest ubuntu bash -c 'echo "stdout"; echo "stderr" >>2'
+    $ docker logs logtest
+    $ docker rm logtest
+```
