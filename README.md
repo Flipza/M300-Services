@@ -279,7 +279,13 @@ Das Vagrantfile sieht folgendermassen aus:
 
 Damit sich Ansible auf alle VM's einloggen kann, müssen wir auf der Acontrol-Node einen public-Key generieren, welchen wir auf alle anderen VM's kopieren:
 ```Shell
-    $ docker run --name logtest ubuntu bash -c 'echo "stdout"; echo "stderr" >>2'
-    $ docker logs logtest
-    $ docker rm logtest
+    $ ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y
+    $ sudo cp /home/vagrant/.ssh/id_rsa.pub /vagrant
 ```
+Damit wir diesen Public-Key auf die verschiedenen VM's bekommen, loggen wir uns auf jedem Gerät ein, und kopieren den Key in das "authorized_keys"-File.
+```Shell
+    $ vagrant ssh LoadBalancer
+    $ cat /vagrant/id_rsa.pub >>/home/vagrant/.ssh/authorized_keys
+```
+Jetzt loggen wir uns nochmal auf die Control-Node ein, auf welcher Ansible läuft und verbinden uns mit jeder VM einmal, um zu bestätigen, dass diese Verbindung sicher ist und wir uns damit verbinden wollen. Somit ist es Ansible nun möglich, auf die verschiedenen Nodes eine SSH-Verbindung aufzubauen.
+
