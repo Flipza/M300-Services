@@ -389,50 +389,19 @@ cd /home/vagrant
 git clone https://github.com/ansible/awx.git
 cd awx/installer/
 ```
+
 Danach generieren Sie den neuen private-Key für den awx mit dem Befehl openssl unten.
 
+```Shell
 openssl rand -hex 32
-Copy the generated secret key to your note.
+```
 
-Now edit the 'inventory' configuration file.
+Kopieren Sie den erzeugten geheimen Schlüssel in Ihre Notiz.
 
+Bearbeiten Sie nun die Konfigurationsdatei "inventory":
+
+```Shell
 vim inventory
-Change the 'postgres_data_dir' to the '/var/lib/pgdocker' directory.
-
-postgres_data_dir=/var/lib/pgdocker
-Change the 'host_port' to '8080'.
-
-host_port=8080
-Uncomment the 'use_docker_compose' line and change the value to 'true', because we're going to manage the awx using the docker compose.
-
-use_docker_compose=true
-Now make sure the 'docker_compose_dir' is located to the '/var/lib/awx' directory.
-
-docker_compose_dir=/var/lib/awx
-Change the credentials for the 'pg_password', 'rabbitmq_password', 'rabbitmq_erlang_cookie', 'admin_user' and 'admin_password' with your own password credentials.
-
-...
- pg_password=hakaseposgresawx
- ...
- rabbitmq_password=hakaserabbitmqawx
- rabbitmq_erlang_cookie=cookiemonster
- ...
- admin_user=hakase
- admin_password=hakasepass
- ...
-after that, change the secret key of the awx configuration using the generated key on top.
-
-secret_key=cbdd4c70bbf82d572bfbdd454b28172642e6b8061b8c8b4937d9134294d30e33
-Then uncomment the 'project_data_dir' and leave the value as default.
-
-project_data_dir=/var/lib/awx/projects
-Save and close the configuration.
-
-Below is the edited of the 'inventory' file.
-
-grep -v '^#' inventory
-inventory configuration file.
-
 localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
  
  [all:vars]
@@ -460,43 +429,58 @@ localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env pyth
  
  create_preload_data=True
  
+ #Ändern Sie den secret_key der awx-Konfiguration mit dem generierten Schlüssel oben.
  secret_key=cbdd4c70bbf82d572bfbdd454b28172642e6b8061b8c8b4937d9134294d30e33
  
  project_data_dir=/var/lib/awx/projects
-And as a result, we're ready to install the awx on the next stage.
+ ```
+ 
+Speichern und schließen Sie die Konfiguration. Dieses File wird für Automatisierungszwecken in unser Shared-Folder gelegt, damit wir dies in unserem Installations-script einfach Kopieren und einfügen können. Dafür löschen wir das alte Konfig-File zuerst:
 
-Step 4 - Install the Ansible AWX
-Install the awx using the following ansible-playbook command.
+```Shell
+rm -f inventory
+cp /vagrant/inventory /home/vagrant/awx/installer/
+ ```
 
+### Schritt 4 - Installation des Ansible AWX
+
+Installieren Sie den awx mit dem folgenden Befehl:
+
+```Shell
 ansible-playbook -i inventory install.yml
-The playbook will do some tasks including downloading docker images and creating new containers postgresql, memcached, rabbitmq, the awx web-application, and the awx task.
+ ```
+ 
+Das Playbook wird einige Aufgaben erledigen, darunter das Herunterladen von Docker-Images und das Erstellen neuer Container nach dem Start vongresql, memcached, rabbitmq, der awx-Webanwendung und der awx-Aufgabe.
 
-And below is the result.
 
-Ansible Playbook
+Als nächstes gehen Sie in das Verzeichnis '/var/lib/awx' und Sie erhalten die Konfiguration von 'docker-compose.yml'. Überprüfen Sie dann alle verfügbaren Docker-Container mit dem Befehl docker-compose.
 
-Next, go to the '/var/lib/awx' directory and you will get the 'docker-compose.yml' configuration. Then check all available docker containers using the docker-compose command.
-
+```Shell
 cd /var/lib/awx
 docker-compose ps
-And you will be shown awx containers as below.
+```
 
-AWX Container
+### Schritt 5 - Nginx als Reverse Proxy installieren und konfigurieren
 
-Additionally, you can check logs of the 'task' service using the following command.
+Nach der Installation des awx werden wir den Nginx als Reverse-Proxy für den awx installieren und konfigurieren, auf dem der Port'8080' läuft.
 
-docker-compose logs task
-Step 5 - Install and Configure Nginx as a Reverse Proxy
-After installing the awx, we will install and configure the Nginx as a reverse proxy for the awx that running port '8080'.
+Installieren Sie Nginx mit dem folgenden apt-Befehl.
 
-Install Nginx using the following apt command.
-
+```Shell
 sudo apt install nginx -y
-Once the installation is completed, go to the '/etc/nginx/sites-available/' directory and create a new virtual host configuration called 'awx' using vim editor.
+```
 
-cd /etc/nginx/sites-available/
-vim awx
-Now paste the configuration below.
+Jetzt müssen wir noch einen ordner und Zertifikat erstellen, auf welches der Nginx Webserver zugreifen kann. Zudem benötigen wir den Public-Key und das Zertifikat im nächsten Schritt, in welchem wir die Nginx-Konfiguration anpassen:
+
+```Shell
+sudo mkdir /etc/nginx/ssl
+sudo openssl req -batch -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt
+```
+
+Sobald dies abgeschlossen ist, gehen Sie in das Verzeichnis '/etc/nginx/sites-available/' und erstellen Sie mit dem vim editor eine neue virtuelle Host-Konfiguration namens 'awx'. Auch diese Datei habe ich im vorhinein erstellt und im Shared-Folder abgelegt, damit dies automtisch während dem provisioning übe rdas Installationsscript erledigt werden kann.
+
+```Shell
+cat awx
 
 server {
    listen 80;
@@ -513,8 +497,8 @@ server {
     error_log /var/log/nginx/awx.error.log;
 
     ssl on;
-    ssl_certificate /etc/nginx/ssl/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_certificate /etc/nginx/ssl/nginx.crt;
+    ssl_certificate_key /etc/nginx/ssl/nginx.key;
     ssl_session_timeout 5m;
     ssl_ciphers EECDH+CHACHA20:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
     ssl_protocols TLSv1.2;
@@ -528,49 +512,65 @@ location / {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
-    proxy_pass http://10.5.5.20:8080/;
+    proxy_pass http://10.0.2.15:8080/;
     }
 }
-Change the domain name and the proxy_pass IP address with your own, then save and exit.
+```
+Ändern Sie den Domainnamen und die IP-Adresse von proxy_pass mit Ihrer eigenen, dann speichern und beenden Sie.
 
-Now activate the 'awx' virtual host and test the nginx configuration.
+In unserem Installationsscript wird deshalb folgender Kommand ausgeführt: 
+```Shell
+sudo cp /vagrant/awx /etc/nginx/sites-available/
+```
 
-ln -s /etc/nginx/sites-available/awx /etc/nginx/sites-enabled/
-nginx -t
-Nginx Reverse Proxy for Ansible AWX
+Aktivieren Sie nun den virtuellen Host 'awx' und testen Sie die nginx-Konfiguration.
 
-Ensure there is no error with nginx configuration, then restart the nginx service.
+```Shell
+sudo ln -s /etc/nginx/sites-available/awx /etc/nginx/sites-enabled/
+sudo nginx -t
+```
 
+Stellen Sie sicher, dass bei der nginx-Konfiguration kein Fehler auftritt, und starten Sie dann den nginx-Dienst neu.
+
+```Shell
 sudo systemctl restart nginx
-As a result, the Nginx installation and configuration as a reverse proxy for awx has been finished.
+```
 
-Step 6 - Configure the UFW Firewall
-Add the SSH, HTTP, and HTTPS services to the UFW firewall configuration.
+Damit ist die Installation und Konfiguration von Nginx als Reverse-Proxy für awx abgeschlossen.
 
+### Schritt 6 - Konfigurieren der UFW Firewall
+
+Fügen Sie die SSH-, HTTP- und HTTPS-Dienste der UFW-Firewall-Konfiguration hinzu.
+
+```Shell
 ufw allow ssh
 ufw allow http
 ufw allow https
-Now start and enable the ufw firewall service.
+```
 
+Starten und aktivieren Sie nun den ufw Firewall-Dienst.
+
+```Shell
 ufw enable
-Type 'y' to yes and the ufw firewall has been configured.
+```
+Geben Sie 'y' für yes ein und die ufw-Firewall wurde konfiguriert. In unserem Script wird das in einem Kommando abgearbeitet, damit wir keine Benutzereingabe tätigen müssen:
 
-Step 7 - Testing
-Open your web browser and type your awx URL in the address bar.
+```Shell
+sudo ufw --force enable
+```
 
-https://awx.hakase-labs.io
+### Schritt 7 - Testing
 
-And you will be shown the awx login page as below.
+Öffnen Sie Ihren Webbrowser und geben Sie Ihre awx-URL in die Adressleiste ein.
 
-Ansible AWX Login
+https://awx.hakase-labs.io oder falls dies nicht funktioniert: localhost:80
 
-Now type the user 'hakase' and password 'hakasepass', then click the 'sign in' button.
+Und Ihnen wird die awx-Login-Seite wie unten gezeigt.
 
-Now you get the awx admin dashboard as below.
+Geben Sie nun den Benutzer 'hakase' und das Passwort 'hakasepass' ein und klicken Sie dann auf die Schaltfläche'Anmelden'.
 
-Ansible AWX Dashboard
+Sie befinden sich nun auf dem AWX-Dashboard und die Installation von Ansible AWX mit Nginx Reverse Proxy wurde erfolgreich abgeschlossen.
 
-And the installation of Ansible AWX with Nginx reverse proxy has been completed successfully.
 
 ! 02 - LB3
 ===
