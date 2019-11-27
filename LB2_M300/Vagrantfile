@@ -1,0 +1,33 @@
+Vagrant.configure("2") do |config|
+
+  config.vm.define "control" do |control|
+    control.vm.box = "ubuntu/bionic64"
+    control.vm.network "private_network", ip: "10.0.2.15"
+    control.vm.network "forwarded_port", guest_ip: "10.0.2.15", guest: 8080, host_ip:"127.0.0.1", host: 80
+    control.vm.hostname = "control"
+    control.vm.synced_folder ".", "/vagrant", type: "nfs"
+      control.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", "control"]
+      vb.memory = "4096"
+      vb.cpus = "4"
+    end
+       control.vm.provision :shell, path: "./install.sh"
+  end
+  
+  config.vm.define "playground" do |pg01|
+    pg01.vm.box = "ubuntu/bionic64"
+    pg01.vm.network "private_network", ip: "10.0.2.20"
+    pg01.vm.hostname = "pg01"
+    pg01.vm.synced_folder ".", "/vagrant", type: "nfs"
+    pg01.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", "web01"]
+      vb.memory = "2048"
+    end
+    pg01.vm.provision "shell", inline: <<-SHELL
+    sudo sed -i 's/XKBLAYOUT="us"/XKBLAYOUT="ch"/g' /etc/default/locale
+    sudo apt-get update -y
+    sudo apt-get upgrade -y
+SHELL
+  end
+
+end
