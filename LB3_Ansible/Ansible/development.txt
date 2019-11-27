@@ -1,0 +1,9 @@
+[controller]
+control ansible_connection=local
+
+[loadbalancer]
+lb01 ansible_user=vagrant
+
+[webserver]
+app01 ansible_user=vagrant
+app02 ansible_user=vagrant

@@ -1,0 +1,35 @@
+---
+- hosts: webserver
+  become: true
+  tasks:
+    - name: install apache
+      apt: name=apache2 state=present update_cache=yes
+
+    - name: delete original index.html
+      file: path=/var/www/html/index.html state=absent
+      notify: restart apache2
+
+    - name: restart apache2
+      service: name=apache2 state=restarted
+
+- hosts: app01
+  become: true
+  tasks:
+    - name: set up index1.html for first web server
+      copy:
+        src: /vagrant/index1.html 
+        dest: /var/www/html/index.html 
+        mode: 0644
+    - name: restart apache2
+      service: name=apache2 state=restarted
+
+- hosts: app02
+  become: true
+  tasks:
+    - name: set up index2.html for second web server
+      copy:
+        src: /vagrant/index2.html 
+        dest: /var/www/html/index.html 
+        mode: 0644
+    - name: restart apache2
+      service: name=apache2 state=restarted
