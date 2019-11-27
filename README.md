@@ -258,6 +258,66 @@ Das Ziel ist die Erstellung eines Vagrantfiles, welches automatisiert die Ansibl
 * Shared Folder für die Berteitstellung der im Vagrantfile für die Installation der AWX Umgebung benötigten Dateien.
 * Portweiterleitung.
 
+Als Vorlage für diese Installation diente mir nachfolgende Website. Allerdings funktionierte diese nicht so wie beschrieben. Deshalb habe ich sie für meine Anforderungen angepasst:
+https://www.howtoforge.com/tutorial/how-to-install-ansible-awx-with-nginx-reverse-proxy-on-ubuntu-1804/
+
+Aufgrund dieser Vorlage habe ich ein Vagrantfile erstellt, welches im Ordner LB02 abgelegt ist und betrachtet werden kann:
+
+```Shell
+    Vagrant.configure("2") do |config|
+
+  config.vm.define "control" do |control|
+    control.vm.box = "ubuntu/bionic64"
+    control.vm.network "private_network", ip: "10.0.2.15"
+    control.vm.network "forwarded_port", guest_ip: "10.0.2.15", guest: 8080, host_ip:"127.0.0.1", host: 80
+    control.vm.hostname = "control"
+    control.vm.synced_folder ".", "/vagrant", type: "nfs"
+      control.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", "control"]
+      vb.memory = "4096"
+      vb.cpus = "4"
+    end
+       control.vm.provision :shell, path: "./install.sh"
+  end
+end
+```
+
+Wie wir hier sehen wird in der Konfig die Portweiterleitung aktiviert, damit der Host auf die VM per Webbrowser zugreifen kann.
+Für das provisioning habe ich ein Shellscript geschrieben, welches vollautomatisch die Arbeitsumgebung aufsetzt:
+
+```Shell
+    sudo sed -i 's/XKBLAYOUT="us"/XKBLAYOUT="ch"/g' /etc/default/locale
+    sudo apt-get update -y
+    sudo apt-get install software-properties-common -y
+    sudo apt-add-repository ppa:ansible/ansible -y
+    sudo apt-get update -y
+    sudo apt-get install ansible -y
+    sudo apt-get install docker.io -y
+    sudo apt-get install python-pip -y
+    sudo apt-get install docker-compose -y
+    pip install docker-compose 
+    pip install docker 
+    sudo apt-get install nodejs npm -y
+    sudo npm install npm --global
+    cd /home/vagrant 
+    git clone https://github.com/ansible/awx.git
+    cd awx/installer
+    rm -f inventory
+    cp /vagrant/inventory /home/vagrant/awx/installer/
+    sudo ansible-playbook -i inventory install.yml
+    sudo apt-get install nginx -y
+    sudo mkdir /etc/nginx/ssl
+    sudo openssl req -batch -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt
+    sudo cp /vagrant/awx /etc/nginx/sites-available/
+    sudo ln -s /etc/nginx/sites-available/awx /etc/nginx/sites-enabled/
+    sudo nginx -t
+    sudo systemctl restart nginx
+    sudo ufw allow ssh
+    sudo ufw allow http
+    sudo ufw allow https
+    sudo ufw --force enable
+```
+
 ! 02 - LB3
 ===
 
