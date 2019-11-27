@@ -51,8 +51,8 @@ Git Befehl | Erklärung
 4. Sobald der Vorgang abgeschlossen wurde, kann mit dem Herunterladen der ISO-Datei und der VM-Erstellung fortgefahren werden.
 
 
-### Extensions installieren
-***
+#### Extensions installieren
+
 
 Wir fügen dem Editor drei wichtige Extensions hinzu:
 
