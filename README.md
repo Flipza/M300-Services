@@ -583,12 +583,98 @@ Wir benötigen für diese Aufgabe folgende VM's:
 * Webserver 1 (Apache Webserver 1)
 * Webserver 2 (Apache Webserver 2)
 
+### Schritt 1 - Alle VM's aufsetzen
+
 Alle VM's basieren auf Ubuntu 18.04 Server und werden mit Vagrant aufgesetzt. 
 Das Vagrantfile sieht folgendermassen aus:
 ```Shell
-    $ docker run --name logtest ubuntu bash -c 'echo "stdout"; echo "stderr" >>2'
-    $ docker logs logtest
-    $ docker rm logtest
+    Vagrant.configure("2") do |config|
+
+  config.vm.define "Acontrol" do |acontrol|
+    acontrol.vm.box = "ubuntu/bionic64"
+    acontrol.vm.network "private_network", ip: "192.168.33.10"
+    acontrol.vm.hostname = "acontrol"
+    acontrol.vm.synced_folder ".", "/vagrant", type: "nfs"
+      acontrol.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", "acontrol"]
+      vb.memory = "2048"
+      vb.cpus = "2"
+    end
+       acontrol.vm.provision "shell", inline: <<-SHELL
+        sudo sed -i 's/XKBLAYOUT="us"/XKBLAYOUT="ch"/g' /etc/default/locale 
+        sudo apt-get install software-properties-common -y
+        sudo apt-add-repository ppa:ansible/ansible -y
+        sudo apt-get update -y
+        sudo apt-get upgrade -y
+        sudo apt-get install ansible -y
+        echo '127.0.0.1 localhost acontrol\n192.168.33.11 lb01\n192.168.33.12 app01\n192.168.33.13 app02' > /etc/hosts
+        cp -r /vagrant/Ansible /home/vagrant/
+        su - vagrant -c "ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y"
+        sudo cp /home/vagrant/.ssh/id_rsa.pub /vagrant
+   SHELL
+  end
+  
+  config.vm.define "LoadBalancer" do |lb01|
+    lb01.vm.box = "ubuntu/bionic64"
+    lb01.vm.network "private_network", ip: "192.168.33.11"
+    lb01.vm.network "forwarded_port", guest_ip: "192.168.33.11", guest: 80, host_ip:"127.0.0.1", host: 6969
+    lb01.vm.hostname = "lb01"
+    lb01.vm.synced_folder ".", "/vagrant", type: "nfs"
+    lb01.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", "lb01"]
+      vb.memory = "1024"
+      vb.cpus = "1"
+    end
+    lb01.vm.provision "shell", inline: <<-SHELL
+    sudo sed -i 's/XKBLAYOUT="us"/XKBLAYOUT="ch"/g' /etc/default/locale
+    sudo apt-get update -y
+    sudo apt-get upgrade -y
+    echo '127.0.0.1 localhost lb01\n192.168.33.10 acontrol\n192.168.33.12 app01\n192.168.33.13 app02' > /etc/hosts
+    cat /vagrant/id_rsa.pub >>/home/vagrant/.ssh/authorized_keys
+SHELL
+  end
+
+  config.vm.define "WebServer1" do |app01|
+    app01.vm.box = "ubuntu/bionic64"
+    app01.vm.network "private_network", ip: "192.168.33.12"
+    #app01.vm.network "forwarded_port", guest_ip: "10.0.2.17", guest: 8080, host_ip:"127.0.0.1", host: 8888
+    app01.vm.hostname = "app01"
+    app01.vm.synced_folder ".", "/vagrant", type: "nfs"
+    app01.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", "app01"]
+      vb.memory = "1024"
+      vb.cpus = "1"
+    end
+    app01.vm.provision "shell", inline: <<-SHELL
+    sudo sed -i 's/XKBLAYOUT="us"/XKBLAYOUT="ch"/g' /etc/default/locale
+    sudo apt-get update -y
+    sudo apt-get upgrade -y
+    echo '127.0.0.1 localhost app01\n192.168.33.11 lb01\n192.168.33.10 acontrol\n192.168.33.13 app02' > /etc/hosts
+    cat /vagrant/id_rsa.pub >>/home/vagrant/.ssh/authorized_keys
+SHELL
+  end
+
+  config.vm.define "WebServer2" do |app02|
+    app02.vm.box = "ubuntu/bionic64"
+    app02.vm.network "private_network", ip: "192.168.33.13"
+    #app02.vm.network "forwarded_port", guest_ip: "10.0.2.18", guest: 8080, host_ip:"127.0.0.1", host: 8808
+    app02.vm.hostname = "app02"
+    app02.vm.synced_folder ".", "/vagrant", type: "nfs"
+    app02.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--name", "app02"]
+      vb.memory = "1024"
+      vb.cpus = "1"
+    end
+    app02.vm.provision "shell", inline: <<-SHELL
+    sudo sed -i 's/XKBLAYOUT="us"/XKBLAYOUT="ch"/g' /etc/default/locale
+    sudo apt-get update -y
+    sudo apt-get upgrade -y
+    echo '127.0.0.1 localhost app02\n192.168.33.12 app01\n192.168.33.12 lb01\n192.168.33.10 acontrol' > /etc/hosts
+    cat /vagrant/id_rsa.pub >>/home/vagrant/.ssh/authorized_keys
+SHELL
+  end
+
+end
 ```
 
 Damit sich Ansible auf alle VM's einloggen kann, müssen wir auf der Acontrol-Node einen public-Key generieren, welchen wir auf alle anderen VM's kopieren:
@@ -603,3 +689,111 @@ Damit wir diesen Public-Key auf die verschiedenen VM's bekommen, loggen wir uns 
 ```
 Jetzt loggen wir uns nochmal auf die Control-Node ein, auf welcher Ansible läuft und verbinden uns mit jeder VM einmal, um zu bestätigen, dass diese Verbindung sicher ist und wir uns damit verbinden wollen. Somit ist es Ansible nun möglich, auf die verschiedenen Nodes eine SSH-Verbindung aufzubauen.
 
+### Schritt 2 - Ansible konfiguration
+
+Da nun alle VM's aufgesetzt sind und Ansible sich mit allen VM's per SSH verbinden kann, ist es nun soweit Ansible zu knfigurieren. Das Ansible konfigurationsfile sieht folgendermassen aus:
+
+```Shell
+    [defaults]
+    inventory = ./development.txt
+```
+In diesem File wird der Pfad zum Inventar definiert. Nachfolgend sehen wir das verknüpfte File:
+
+```Shell
+    [controller]
+    control ansible_connection=local
+
+    [loadbalancer]
+    lb01 ansible_user=vagrant
+
+    [webserver]
+    app01 ansible_user=vagrant
+    app02 ansible_user=vagrant
+```
+Wie hier zu sehen, habe ich drei Gruppen mit den jeweils dazugehörigen Hosts und dem von Ansible zu wählenden Benuzer definiert. Nachdem wir dies erledigt haben, kann jetzt mit dem Schreiben der Playbooks begonnen werden. Ich habe jeweils ein Playbook für den Loadbalancer und eines für die zwei Webserver geschrieben.
+Zuerst das PB des Loadbalancers:
+```Shell
+---
+- hosts: loadbalancer
+  become: true
+  tasks:
+        - name: install nginx
+          apt: name=nginx state=present update_cache=yes
+
+        - name: start nginx
+          service: name=nginx state=started enabled=yes
+
+        - name: configure nginx
+          template: src=/home/vagrant/Ansible/nginx.conf.j2 dest=/etc/nginx/sites-available/test mode=0644
+          notify: restart nginx
+
+        - name: delete old link
+          file: path=/etc/nginx/sites-enabled/default state=absent
+          notify: restart nginx
+
+        - name: activate test site
+          file: src=/etc/nginx/sites-available/test dest=/etc/nginx/sites-enabled/test state=link
+          notify: restart nginx
+
+          handlers:
+        - name: restart nginx
+          service: name=nginx state=restarted
+
+```
+Wie wir hier sehen, wird Nginx installiert, mein vorbereitetes "nginx.conf.j2"-File wird in den "test" Ordner im  "sites-available" kopiert, und die Berechtigungen angepasst. Hier noch das Konfigfile:
+```Shell
+    upstream test {
+    {% for server in groups.webserver %}
+    server {{ server }};
+    {% endfor %}
+    }
+
+    server {
+    listen 80;
+
+    location / {
+    proxy_pass http://test;
+    }
+    }
+```
+Wie wir sehen wird vom einen Webserver bei jedem Aufruf auf den anderen Webserver ala Round-Robin geswitched.
+Anschliessend wird die default-Website gelöscht und die neue Seite verlinkt. Damit ist der Loadbalancer fertig konfiguriert.
+Weiter geht es nun mit den Webservern. Das Playbook sieht folgendermassen aus:
+```Shell
+---
+- hosts: webserver
+  become: true
+  tasks:
+    - name: install apache
+      apt: name=apache2 state=present update_cache=yes
+
+    - name: delete original index.html
+      file: path=/var/www/html/index.html state=absent
+      notify: restart apache2
+
+    - name: restart apache2
+      service: name=apache2 state=restarted
+
+- hosts: app01
+  become: true
+  tasks:
+    - name: set up index1.html for first web server
+      copy:
+        src: /vagrant/index1.html 
+        dest: /var/www/html/index.html 
+        mode: 0644
+    - name: restart apache2
+      service: name=apache2 state=restarted
+
+- hosts: app02
+  become: true
+  tasks:
+    - name: set up index2.html for second web server
+      copy:
+        src: /vagrant/index2.html 
+        dest: /var/www/html/index.html 
+        mode: 0644
+    - name: restart apache2
+      service: name=apache2 state=restarted
+```
+Wie in diesem Playbook ersichtlich wird zuerst Apache installiert. Anschliessend wird das Originale "index.html" gelöscht und mein vorbereitetes indexfile in den Ordner kopiert. Dies wird für beide Webserver ausgeführt und somit ist auch die konfiguration der Webserver abgeschlossen.
