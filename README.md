@@ -588,7 +588,7 @@ Wir benötigen für diese Aufgabe folgende VM's:
 Alle VM's basieren auf Ubuntu 18.04 Server und werden mit Vagrant aufgesetzt. 
 Das Vagrantfile sieht folgendermassen aus:
 ```Shell
-    Vagrant.configure("2") do |config|
+   Vagrant.configure("2") do |config|
 
   config.vm.define "Acontrol" do |acontrol|
     acontrol.vm.box = "ubuntu/bionic64"
@@ -611,7 +611,9 @@ Das Vagrantfile sieht folgendermassen aus:
         cp -r /vagrant/Ansible /home/vagrant/
         su - vagrant -c "ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y"
         sudo cp /home/vagrant/.ssh/id_rsa.pub /vagrant
-   SHELL
+        sudo ufw allow ssh
+        sudo ufw --force enable
+      SHELL
   end
   
   config.vm.define "LoadBalancer" do |lb01|
@@ -631,7 +633,11 @@ Das Vagrantfile sieht folgendermassen aus:
     sudo apt-get upgrade -y
     echo '127.0.0.1 localhost lb01\n192.168.33.10 acontrol\n192.168.33.12 app01\n192.168.33.13 app02' > /etc/hosts
     cat /vagrant/id_rsa.pub >>/home/vagrant/.ssh/authorized_keys
-SHELL
+    sudo ufw allow ssh
+    sudo ufw allow http
+    sudo ufw allow https
+    sudo ufw --force enable
+  SHELL
   end
 
   config.vm.define "WebServer1" do |app01|
@@ -651,7 +657,11 @@ SHELL
     sudo apt-get upgrade -y
     echo '127.0.0.1 localhost app01\n192.168.33.11 lb01\n192.168.33.10 acontrol\n192.168.33.13 app02' > /etc/hosts
     cat /vagrant/id_rsa.pub >>/home/vagrant/.ssh/authorized_keys
-SHELL
+    sudo ufw allow ssh
+    sudo ufw allow http
+    sudo ufw allow https
+    sudo ufw --force enable
+    SHELL
   end
 
   config.vm.define "WebServer2" do |app02|
@@ -671,7 +681,11 @@ SHELL
     sudo apt-get upgrade -y
     echo '127.0.0.1 localhost app02\n192.168.33.12 app01\n192.168.33.12 lb01\n192.168.33.10 acontrol' > /etc/hosts
     cat /vagrant/id_rsa.pub >>/home/vagrant/.ssh/authorized_keys
-SHELL
+    sudo ufw allow ssh
+    sudo ufw allow http
+    sudo ufw allow https
+    udo ufw --force enable
+    SHELL
   end
 
 end
